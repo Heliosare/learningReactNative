@@ -8,18 +8,37 @@ import FilmItem from './FilmItem';
 
 
 class Search extends React.Component {
+  constructor(props) {
+    super(props);
+    this.searchedText = '';
+    this.setState({ films: data.results })
+    this.state = {
+      films: [],
+    };
+  }
 
   _loadFilms() {
-    getFilmsFromApiWithSearchedText("star").then(data => console.log(data));
+    console.log(this.searchedText) // Un log pour vérifier qu'on a bien le texte du TextInput
+    if (this.searchedText.length > 0) { // Seulement si le texte recherché n'est pas vide
+      getFilmsFromApiWithSearchedText(this.searchedText).then(data => {
+          this.setState({ films: data.results })
+      })
+    }
+  }
+
+  _searchTextInputChanged(text) {
+    this.searchedText = text;
   }
 
   render() {
     return (
       <View style={styles.main_container}>
-        <TextInput style={styles.textinput} placeholder='Titre du film'/>
+        <TextInput style={styles.textinput} placeholder='Titre du film'
+          onChangeText={(text) => this._searchTextInputChanged(text)}
+                      />
         <Button title='Rechercher' onPress={() => this._loadFilms()}/>
         <FlatList
-          data={films}
+          data={this.state.films}
           keyExtractor={(item) => item.id.toString()}
           renderItem={({item}) => <FilmItem film={item}/>}
         />
