@@ -10,26 +10,28 @@ import FilmItem from './FilmItem';
 class Search extends React.Component {
   constructor(props) {
     super(props);
-    this.searchedText = '';
-    this.setState({ films: data.results })
+    this.searchedText = ""
+    this.page = 0 // Compteur pour connaître la page courante
+    this.totalPages = 0 // Nombre de pages totales pour savoir si on a atteint la fin des retours de l'API TMDB
     this.state = {
       films: [],
-      isLoading: false,
-    };
+      isLoading: false
+    }
   }
 
   _loadFilms() {
-    console.log(this.searchedText) // Un log pour vérifier qu'on a bien le texte du TextInput
-    if (this.searchedText.length > 0) { // Seulement si le texte recherché n'est pas vide
-      this.setState({ isLoading: true }) // Lancement du chargement
-      getFilmsFromApiWithSearchedText(this.searchedText).then(data => {
+    if (this.searchedText.length > 0) {
+      this.setState({ isLoading: true })
+      getFilmsFromApiWithSearchedText(this.searchedText, this.page+1).then(data => {
+          this.page = data.page
+          this.totalPages = data.total_pages
           this.setState({
-            films: data.results,
-            isLoading: false,
+            films: [ ...this.state.films, ...data.results ],
+            isLoading: false
           })
       })
     }
-  }
+}
 
   _searchTextInputChanged(text) {
     this.searchedText = text;
@@ -62,6 +64,12 @@ class Search extends React.Component {
           data={this.state.films}
           keyExtractor={(item) => item.id.toString()}
           renderItem={({item}) => <FilmItem film={item}/>}
+          onEndReachedThreshold={0.5}
+          onEndReached={() => {
+              if (this.page < this.totalPages) { // On vérifie qu'on n'a pas atteint la fin de la pagination (totalPages) avant de charger plus d'éléments
+                this._loadFilms()
+              }
+          }}
         />
         { this._displayLoading() }
       </View>
