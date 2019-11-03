@@ -1,18 +1,15 @@
-// Components/Search.js
-
 import React from 'react'
-import { StyleSheet, View, TextInput, Button, Text, FlatList, ActivityIndicator } from 'react-native';
-import { getFilmsFromApiWithSearchedText } from '../API/TMDBApi' ;
-import films from '../Helpers/filmsData';
-import FilmItem from './FilmItem';
-
+import { StyleSheet, View, TextInput, Button, Text, FlatList, ActivityIndicator } from 'react-native'
+import FilmItem from './FilmItem'
+import { getFilmsFromApiWithSearchedText } from '../API/TMDBApi'
 
 class Search extends React.Component {
+
   constructor(props) {
-    super(props);
+    super(props)
     this.searchedText = ""
-    this.page = 0 // Compteur pour connaître la page courante
-    this.totalPages = 0 // Nombre de pages totales pour savoir si on a atteint la fin des retours de l'API TMDB
+    this.page = 0
+    this.totalPages = 0
     this.state = {
       films: [],
       isLoading: false
@@ -31,10 +28,20 @@ class Search extends React.Component {
           })
       })
     }
-}
+  }
 
   _searchTextInputChanged(text) {
-    this.searchedText = text;
+    this.searchedText = text 
+  }
+
+  _searchFilms() {
+    this.page = 0
+    this.totalPages = 0
+    this.setState({
+      films: [],
+    }, () => {
+        this._loadFilms()
+    })
   }
 
   _displayLoading() {
@@ -42,36 +49,41 @@ class Search extends React.Component {
       return (
         <View style={styles.loading_container}>
           <ActivityIndicator size='large' />
-          {/* Le component ActivityIndicator possède une propriété size pour définir la taille du visuel de chargement : small ou large. Par défaut size vaut small, on met donc large pour que le chargement soit bien visible */}
         </View>
       )
     }
   }
 
-
+  _displayDetailForFilm = (idFilm) => {
+    console.log("Display film with id " + idFilm)
+    this.props.navigation.navigate("FilmDetail")
+  }
+  
   render() {
-    console.log(this.state.isLoading)
+    const { film, displayDetailForFilm } = this.props
     return (
-      <View style={styles.main_container}>
+        <View
+            style={styles.main_container}
+            onPress={() => displayDetailForFilm(film.id)}> 
         <TextInput
           style={styles.textinput}
           placeholder='Titre du film'
           onChangeText={(text) => this._searchTextInputChanged(text)}
-          onSubmitEditing={() => this._loadFilms()}
+          onSubmitEditing={() => this._searchFilms()}
         />
-        <Button title='Rechercher' onPress={() => this._loadFilms()}/>
+        <Button title='Rechercher' onPress={() => this._searchFilms()}/>
         <FlatList
           data={this.state.films}
           keyExtractor={(item) => item.id.toString()}
-          renderItem={({item}) => <FilmItem film={item}/>}
+          renderItem={({item}) => <FilmItem film={item} displayDetailForFilm={this._displayDetailForFilm} />}
           onEndReachedThreshold={0.5}
           onEndReached={() => {
-              if (this.page < this.totalPages) { // On vérifie qu'on n'a pas atteint la fin de la pagination (totalPages) avant de charger plus d'éléments
-                this._loadFilms()
+              if (this.page < this.totalPages) {
+                 this._loadFilms()
               }
           }}
         />
-        { this._displayLoading() }
+        {this._displayLoading()}
       </View>
     )
   }
